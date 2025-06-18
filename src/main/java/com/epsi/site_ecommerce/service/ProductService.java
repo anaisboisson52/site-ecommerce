@@ -1,13 +1,13 @@
 package com.epsi.site_ecommerce.service;
 
-import com.epsi.site_ecommerce.dto.ProductDTO;
-import com.epsi.site_ecommerce.entity.ProductEntity;
+import com.epsi.site_ecommerce.dto.Product;
 import com.epsi.site_ecommerce.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -28,16 +28,73 @@ public class ProductService {
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
     }
 
-    public List<ProductEntity> getAllProducts() {
+    public List<Product> getAllProducts() {
         return webClient.get()
                 .uri("/products")
                 .retrieve()
-                .onStatus(status -> status.is4xxClientError(), this::handle4xxError)
-                .onStatus(status -> status.is5xxServerError(), this::handle5xxError)
-                .bodyToFlux(ProductEntity.class)
+                .onStatus(HttpStatusCode::is4xxClientError, this::handle4xxError)
+                .onStatus(HttpStatusCode::is5xxServerError, this::handle5xxError)
+                .bodyToFlux(Product.class)
                 .collectList()
                 .block();
     }
+
+
+    public Page<Product> getAllProductsByPagination(int page, int size) {
+        List<Product> allProducts = webClient.get()
+                .uri("/products")
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, this::handle4xxError)
+                .onStatus(HttpStatusCode::is5xxServerError, this::handle5xxError)
+                .bodyToFlux(Product.class)
+                .collectList()
+                .block();
+
+        int start = page * size;
+        int end = Math.min(start + size, allProducts.size());
+
+        if (start > allProducts.size()) {
+            return new PageImpl<>(List.of(), PageRequest.of(page, size), allProducts.size());
+        }
+
+        List<Product> paginated = allProducts.subList(start, end);
+        return new PageImpl<>(paginated, PageRequest.of(page, size), allProducts.size());
+    }
+
+    public Product getProductById(String id) {
+        return webClient.get()
+                .uri("/products/{id}", id)
+                .retrieve()
+                .onStatus(status -> status.is4xxClientError(), this::handle4xxError)
+                .onStatus(status -> status.is5xxServerError(), this::handle5xxError)
+                .bodyToFlux(Product.class)
+                .blockFirst();
+
+    }
+
+    public void updateStock(String productId, int newStock) {
+        webClient.patch()
+                .uri("/products/{id}", productId)
+                .bodyValue("{\"stock\": " + newStock + "}")
+                .header("Content-Type", "application/json")
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, this::handle4xxError)
+                .onStatus(HttpStatusCode::is5xxServerError, this::handle5xxError)
+                .bodyToMono(Void.class)
+                .block();
+    }
+
+    public void updateProductStock(String productId, int nouveauStock) {
+        webClient.patch()
+                .uri("/products/{id}", productId)
+                .header("Content-Type", "application/json")
+                .bodyValue("{\"stock\":" + nouveauStock + "}")
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+    }
+
+
 
     private Mono<Throwable> handle4xxError(ClientResponse response) {
         return response.bodyToMono(String.class).map(body -> {
@@ -52,39 +109,5 @@ public class ProductService {
     private Mono<Throwable> handle5xxError(ClientResponse response) {
         return response.bodyToMono(String.class)
                 .map(body -> new RuntimeException("Erreur serveur : " + body));
-    }
-
-    public Page<ProductEntity> getAllProductsByPagination(int page, int size) {
-        List<ProductEntity> allProducts = webClient.get()
-                .uri("/products")
-                .retrieve()
-                .bodyToFlux(ProductEntity.class)
-                .collectList()
-                .block();
-
-        int start = page * size;
-        int end = Math.min(start + size, allProducts.size());
-
-        if (start > allProducts.size()) {
-            return new PageImpl<>(List.of(), PageRequest.of(page, size), allProducts.size());
-        }
-
-        List<ProductEntity> paginated = allProducts.subList(start, end);
-        return new PageImpl<>(paginated, PageRequest.of(page, size), allProducts.size());
-    }
-
-    public ProductEntity getProductById(String id) {
-        return webClient.get()
-                .uri("/products/{id}", id)
-                .retrieve()
-                .onStatus(status -> status.is4xxClientError(), this::handle4xxError)
-                .onStatus(status -> status.is5xxServerError(), this::handle5xxError)
-                .bodyToFlux(ProductEntity.class)
-                .blockFirst();
-
-    }
-
-    public List<ProductEntity> saveProducts(List<ProductEntity> newProducts) {
-        return productRepository.saveAll(newProducts);
     }
 }

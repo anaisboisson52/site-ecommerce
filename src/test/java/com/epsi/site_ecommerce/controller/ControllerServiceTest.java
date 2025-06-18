@@ -1,5 +1,6 @@
 package com.epsi.site_ecommerce.controller;
 
+import com.epsi.site_ecommerce.service.ProductService;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,11 +23,15 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 @SpringBootTest
 @AutoConfigureMockMvc
-class ProductServiceTest {
+@ActiveProfiles("test")
+class ControllerServiceTest {
+
+    private final ProductService productService = mock(ProductService.class);
 
     @Autowired
     private MockMvc mockMvc;
@@ -149,4 +155,18 @@ class ProductServiceTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("must be greater than or equal to 1")));
     }
+
+    @Test
+    void shouldReturn404WhenPagination () throws Exception {
+        mockWebServer.enqueue(new MockResponse()
+                .setResponseCode(404)
+                .addHeader("Content-Type", "application/json")
+                .setBody("Bad request"));
+
+        mockMvc.perform(get("/product/paginated?page=0&size=2")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Produit non trouvé : Bad request"));
+    }
+
 }
