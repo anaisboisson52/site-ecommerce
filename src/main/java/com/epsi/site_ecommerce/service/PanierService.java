@@ -2,8 +2,6 @@ package com.epsi.site_ecommerce.service;
 
 import com.epsi.site_ecommerce.dto.Panier;
 import com.epsi.site_ecommerce.dto.Product;
-import com.epsi.site_ecommerce.repository.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 

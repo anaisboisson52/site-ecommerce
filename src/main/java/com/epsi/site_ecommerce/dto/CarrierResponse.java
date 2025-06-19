@@ -13,5 +13,7 @@ public record CarrierResponse(
         String contact_email,
         String phone,
         String tracking_url_template,
-        List<String> features
+        List<String> features,
+        double price
 ) {}
+
