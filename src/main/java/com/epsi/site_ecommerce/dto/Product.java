@@ -31,7 +31,7 @@ public class Product implements Serializable {
     private String category;
 
     @Min(value = 0, message = "Le poids doit être positif")
-    private int weight;
+    private double weight;
 
     @NotNull(message = "La liste d'images ne peut pas être null")
     private List<@NotBlank(message = "Chaque URL d'image doit être non vide") String> images;
@@ -67,6 +67,8 @@ public class Product implements Serializable {
     public void setCurrency(String currency) { this.currency = currency; }
 
     public int getStock() { return stock; }
+
+    public double getWeight() { return weight; }
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }

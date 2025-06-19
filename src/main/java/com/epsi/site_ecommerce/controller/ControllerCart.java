@@ -81,6 +81,7 @@ public class ControllerCart {
     }
 
 
+
     @GetMapping
     public ResponseEntity<Panier> getCart(HttpSession session) {
         return ResponseEntity.ok(getSessionPanier(session));
