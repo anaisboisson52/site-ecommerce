@@ -21,10 +21,9 @@ public class CarrierService {
 
     public CarrierService(
             WebClient.Builder webClientBuilder,
-            @Value("${webclient.carrier-url}") String baseUrl
+            @Value("${webclient.base-url}") String baseUrl
     ) {
         this.webClient = webClientBuilder.baseUrl(baseUrl).build();
-        // Par défaut endpoint /carriers (modifie ici si besoin)
         this.carriersEndpoint = "/carriers";
     }
 
