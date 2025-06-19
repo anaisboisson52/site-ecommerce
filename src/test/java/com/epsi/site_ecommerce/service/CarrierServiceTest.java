@@ -23,7 +23,7 @@ class CarrierServiceTest {
         return new CarrierResponse(
                 id, name, "Service", "Zone", 4.5, maxWeight,
                 "contact@email.com", "+33123456789", "https://track/{tracking_number}",
-                List.of("option1", "option2")
+                List.of("option1", "option2"),3
         );
     }
 

@@ -36,11 +36,9 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Mock repo pour saveProducts (le reste n'en a pas besoin)
         productRepository = Mockito.mock(ProductRepository.class);
         productService = new ProductService(
                 productRepository,
-                // Builder normal avec URL mock
                 org.springframework.web.reactive.function.client.WebClient.builder().baseUrl(mockWebServer.url("/").toString()),
                 mockWebServer.url("/").toString()
         );
@@ -115,7 +113,7 @@ class ProductServiceTest {
                 .setBody(responseBody)
                 .addHeader("Content-Type", "application/json"));
 
-        Page<Product> page = productService.getAllProductsByPagination(2, 5); // page trop grande
+        Page<Product> page = productService.getAllProductsByPagination(2, 5);
         assertThat(page.getContent()).isEmpty();
         assertThat(page.getTotalElements()).isEqualTo(2);
     }
