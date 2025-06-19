@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -64,7 +65,6 @@ class CartControllerIntegrationTest {
                 .andExpect(jsonPath("$.items[0].product.id").value("1"))
                 .andExpect(jsonPath("$.items[0].quantity").value(3));
     }
-
     @Test
     void addProductToCart_shouldAddEvenIfStockInsufficientInitially() throws Exception {
         Product p = buildProduct("2", "Produit Limite", 20, 2);
@@ -73,25 +73,30 @@ class CartControllerIntegrationTest {
         mockMvc.perform(post("/api/cart/add")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.items", hasSize(1)))
-                .andExpect(jsonPath("$.items[0].quantity").value(5));
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Stock insuffisant")));
     }
+
+
 
     @Test
     void updateProductQuantity_shouldUpdateAndReturnCart() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+
         Product p = buildProduct("1", "Produit Test", 12, 10);
         AddToCartRequest addRequest = new AddToCartRequest(p, 2);
         mockMvc.perform(post("/api/cart/add")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(addRequest)))
+                        .content(objectMapper.writeValueAsString(addRequest))
+                        .session(session))
                 .andExpect(status().isOk());
 
         UpdateQuantityRequest updateRequest = new UpdateQuantityRequest("1", 7, 10);
 
         mockMvc.perform(put("/api/cart/update")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateRequest)))
+                        .content(objectMapper.writeValueAsString(updateRequest))
+                        .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].quantity").value(7));
     }
@@ -144,6 +149,8 @@ class CartControllerIntegrationTest {
 
     @Test
     void getCart_shouldReturnAllItems() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+
         Product p1 = buildProduct("1", "Produit A", 10, 10);
         Product p2 = buildProduct("2", "Produit B", 15, 8);
         AddToCartRequest req1 = new AddToCartRequest(p1, 2);
@@ -151,14 +158,17 @@ class CartControllerIntegrationTest {
 
         mockMvc.perform(post("/api/cart/add")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req1)))
+                        .content(objectMapper.writeValueAsString(req1))
+                        .session(session))
                 .andExpect(status().isOk());
         mockMvc.perform(post("/api/cart/add")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req2)))
+                        .content(objectMapper.writeValueAsString(req2))
+                        .session(session))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/api/cart"))
+        mockMvc.perform(get("/api/cart")
+                        .session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items", hasSize(2)))
                 .andExpect(jsonPath("$.items[?(@.product.id=='1')].quantity", hasItem(2)))
@@ -182,26 +192,18 @@ class CartControllerIntegrationTest {
     }
 
     @Test
-    void validateCart_shouldReturnErrorsIfStockInsufficient() throws Exception {
-        Product p1 = buildProduct("1", "Produit A", 10, 1);  // stock faible
-        Product p2 = buildProduct("2", "Produit B", 10, 5);
+    void addProductToCart_shouldNotAddIfStockInsufficient() throws Exception {
+        MockHttpSession session = new MockHttpSession();
 
-        AddToCartRequest r1 = new AddToCartRequest(p1, 3); // Demande > stock
-        AddToCartRequest r2 = new AddToCartRequest(p2, 2);
+        Product p1 = buildProduct("1", "Produit A", 10, 1);
+        AddToCartRequest r1 = new AddToCartRequest(p1, 3);
 
         mockMvc.perform(post("/api/cart/add")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(r1)))
-                .andExpect(status().isOk());
-        mockMvc.perform(post("/api/cart/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(r2)))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(post("/api/cart/validate"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.valid").value(false))
-                .andExpect(jsonPath("$.errors", hasSize(greaterThanOrEqualTo(1))))
-                .andExpect(jsonPath("$.errors[0]", containsString("Stock insuffisant")));
+                        .content(objectMapper.writeValueAsString(r1))
+                        .session(session))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Stock insuffisant")));
     }
+
 }

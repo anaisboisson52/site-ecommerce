@@ -2,7 +2,7 @@ package com.epsi.site_ecommerce.controller;
 
 import com.epsi.site_ecommerce.dto.CarrierOptionsRequest;
 import com.epsi.site_ecommerce.dto.CarrierResponse;
-import com.epsi.site_ecommerce.service.CarrierApiService;
+import com.epsi.site_ecommerce.service.CarrierService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,14 +11,14 @@ import java.util.List;
 @RequestMapping("/api/carriers")
 public class ControllerCarriers {
 
-    private final CarrierApiService carrierApiService;
+    private final CarrierService carrierService;
 
-    public ControllerCarriers(CarrierApiService carrierApiService) {
-        this.carrierApiService = carrierApiService;
+    public ControllerCarriers(CarrierService carrierService) {
+        this.carrierService = carrierService;
     }
 
     @PostMapping("/options")
     public List<CarrierResponse> getAvailableCarriers(@RequestBody CarrierOptionsRequest request) {
-        return carrierApiService.getCarriersForWeight(request.weight());
+        return carrierService.getCarriersForWeight(request.weight());
     }
 }
