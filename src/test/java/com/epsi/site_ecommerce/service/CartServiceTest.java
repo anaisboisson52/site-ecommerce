@@ -1,6 +1,5 @@
 package com.epsi.site_ecommerce.service;
 
-import com.epsi.site_ecommerce.dto.CartItem;
 import com.epsi.site_ecommerce.dto.Panier;
 import com.epsi.site_ecommerce.dto.Product;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,8 +7,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class CartServiceTest {
 
