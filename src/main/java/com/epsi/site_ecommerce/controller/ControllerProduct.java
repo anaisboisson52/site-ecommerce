@@ -39,8 +39,6 @@ public class ControllerProduct {
         return ResponseEntity.ok(productService.getProductById(id));
     }
 
-
-
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<String> handleResponseStatusException(ResponseStatusException ex) {
         return ResponseEntity.status(ex.getStatusCode()).body(ex.getReason());

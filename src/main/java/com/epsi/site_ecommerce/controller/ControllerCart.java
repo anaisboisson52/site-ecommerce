@@ -33,7 +33,7 @@ public class ControllerCart {
         try {
             Panier panier = getSessionPanier(session);
             cartService.addProductToCart(panier, request.getProduct(), request.getQuantity());
-            session.setAttribute("panier", panier); // 🔥 MISE À JOUR SESSION
+            session.setAttribute("panier", panier);
             return ResponseEntity.ok(panier);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
@@ -45,7 +45,7 @@ public class ControllerCart {
         try {
             Panier panier = getSessionPanier(session);
             cartService.updateProductQuantity(panier, request.getProductId(), request.getQuantity(), request.getStock());
-            session.setAttribute("panier", panier); // 🔥 MISE À JOUR SESSION
+            session.setAttribute("panier", panier);
             return ResponseEntity.ok(panier);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
@@ -56,14 +56,14 @@ public class ControllerCart {
     public ResponseEntity<Panier> removeProduct(@PathVariable String productId, HttpSession session) {
         Panier panier = getSessionPanier(session);
         cartService.removeProductFromCart(panier, productId);
-        session.setAttribute("panier", panier); // 🔥 MISE À JOUR SESSION
+        session.setAttribute("panier", panier);
         return ResponseEntity.ok(panier);
     }
 
     @DeleteMapping("/clear")
     public ResponseEntity<Panier> clearCart(HttpSession session) {
         Panier panier = new Panier();
-        session.setAttribute("panier", panier); // 🔥 RESET SESSION
+        session.setAttribute("panier", panier);
         return ResponseEntity.ok(panier);
     }
 

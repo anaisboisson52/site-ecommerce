@@ -1,7 +1,11 @@
 package com.epsi.site_ecommerce.controller;
 
+import com.epsi.site_ecommerce.dto.Panier;
+import com.epsi.site_ecommerce.dto.PaymentListResponse;
 import com.epsi.site_ecommerce.dto.PaymentResponse;
+import com.epsi.site_ecommerce.dto.Product;
 import com.epsi.site_ecommerce.service.PaymentService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +22,13 @@ public class ControllerPayment {
     }
 
     @GetMapping
-    public ResponseEntity<List<PaymentResponse>> getAllPayment() {
-        return ResponseEntity.ok(paymentService.getPayment());
+    public PaymentListResponse getAllPayments(HttpSession session) {
+        return paymentService.getPaymentListWithTotal(session);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PaymentResponse> getPaymentById(@PathVariable String id) {
+        return ResponseEntity.ok(paymentService.getPaymentById(id));
     }
 
     @PostMapping("/add")

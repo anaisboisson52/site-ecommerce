@@ -1,6 +1,10 @@
 package com.epsi.site_ecommerce.service;
 
+import com.epsi.site_ecommerce.dto.Panier;
+import com.epsi.site_ecommerce.dto.PaymentListResponse;
 import com.epsi.site_ecommerce.dto.PaymentResponse;
+import com.epsi.site_ecommerce.dto.Product;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -30,7 +34,7 @@ public class PaymentService {
     }
 
     public List<PaymentResponse> getPayment() {
-        // Récupération des paiements distants
+
         PaymentResponse[] remotePayments = webClient.get()
                 .uri(paymentEndpoint)
                 .retrieve()
@@ -39,7 +43,7 @@ public class PaymentService {
                 .bodyToMono(PaymentResponse[].class)
                 .block();
 
-        // Fusion avec les paiements en mémoire
+
         List<PaymentResponse> allPayments = new ArrayList<>();
         if (remotePayments != null) {
             allPayments.addAll(Arrays.asList(remotePayments));
@@ -47,6 +51,36 @@ public class PaymentService {
         allPayments.addAll(localPayments);
 
         return allPayments;
+    }
+
+    public PaymentListResponse getPaymentListWithTotal(HttpSession session) {
+        List<PaymentResponse> payments = getPayment();
+
+        Panier panier = (Panier) session.getAttribute("panier");
+        double subtotal = (panier != null) ? panier.getTotal() : 0.0;
+
+        Object carrierObj = session.getAttribute("selectedCarrier");
+        double carrierPrice = 0.0;
+        if (carrierObj instanceof com.epsi.site_ecommerce.dto.CarrierResponse carrier) {
+            carrierPrice = carrier.price();
+        }
+
+        double total = subtotal + carrierPrice;
+
+        return new PaymentListResponse(payments, total);
+    }
+
+
+
+    public PaymentResponse getPaymentById(String id) {
+        return webClient.get()
+                .uri("/payments/{id}", id)
+                .retrieve()
+                .onStatus(status -> status.is4xxClientError(), this::handle4xxError)
+                .onStatus(status -> status.is5xxServerError(), this::handle5xxError)
+                .bodyToFlux(PaymentResponse.class)
+                .blockFirst();
+
     }
 
     public PaymentResponse addPayment(PaymentResponse payment) {
